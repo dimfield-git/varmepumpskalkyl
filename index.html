@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Värmepumpskalkyl</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #F5F5F5;
+      --bg-card: #FFFFFF;
+      --primary: #1B3A4B;
+      --primary-light: #2a5468;
+      --accent: #E8B630;
+      --accent-light: #f0cc6a;
+      --highlight: #D4EDDA;
+      --highlight-border: #88c999;
+      --surface-soft: #F7FAF8;
+      --surface-strong: #EEF6F0;
+      --text: #2D2D2D;
+      --text-muted: #6B7280;
+      --border: #D1D5DB;
+      --input-bg: #FFFFFF;
+      --table-header-bg: var(--primary);
+      --table-header-text: #FFFFFF;
+      --table-stripe: #f9fafb;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --error: #DC2626;
+      --on-primary: #FFFFFF;
+      --on-accent: #1B3A4B;
+    }
+    [data-theme="solcell"] {
+      --bg: #FFFFFF; --bg-card: #FFFFFF; --primary: #2E7D32; --primary-light: #419646; --accent: #F4A535;
+      --accent-light: #f6b95e; --highlight: #E8F5E9; --highlight-border: #89c98d; --surface-soft: #F6FBF6;
+      --surface-strong: #ECF7ED; --text: #243328; --text-muted: #68756c; --border: #D7E2D8; --input-bg: #FFFFFF;
+      --table-header-bg: var(--primary); --table-header-text: #FFFFFF; --table-stripe: #f7faf7; --on-primary: #FFFFFF;
+    }
+    [data-theme="blueprint"] {
+      --bg: #FAFBFC; --bg-card: #FFFFFF; --primary: #37474F; --primary-light: #52656e; --accent: #0097A7;
+      --accent-light: #34aebb; --highlight: #E5F6F8; --highlight-border: #71c3cc; --surface-soft: #F6FBFC;
+      --surface-strong: #EAF6F8; --text: #253037; --text-muted: #6e7e86; --border: #D6DDE1; --input-bg: #FFFFFF;
+      --table-header-bg: var(--primary); --table-header-text: #FFFFFF; --table-stripe: #f5f8fa;
+    }
+    [data-theme="koppar"] {
+      --bg: #FAF8F5; --bg-card: #FFFFFF; --primary: #6B3A2A; --primary-light: #8B5A4A; --accent: #C17F4E;
+      --accent-light: #d4a070; --highlight: #FDF0E2; --highlight-border: #C17F4E; --surface-soft: #FCF7F2;
+      --surface-strong: #F8EFE6; --text: #3B2F2F; --text-muted: #7D6B6B; --border: #D9CFC5; --input-bg: #FFFFFF;
+      --table-header-bg: var(--primary); --table-header-text: #FFFFFF; --table-stripe: #faf6f2;
+    }
+    [data-theme="lovverk"] {
+      --bg: #F4F7F2; --bg-card: #FFFFFF; --primary: #3D6B4F; --primary-light: #5A8A6A; --accent: #A8C256;
+      --accent-light: #bdd474; --highlight: #E8F0DC; --highlight-border: #8aaf3e; --surface-soft: #F7FAF4;
+      --surface-strong: #EEF5E7; --text: #2C3E2D; --text-muted: #6B7F6C; --border: #C5D4C0; --input-bg: #FFFFFF;
+      --table-header-bg: var(--primary); --table-header-text: #FFFFFF; --table-stripe: #f0f5ec;
+    }
+    [data-theme="kooperativ"] {
+      --bg: #FFFFFF; --bg-card: #FFFFFF; --primary: #0B0B0C; --primary-light: #303034; --accent: #E90016;
+      --accent-light: #ff394b; --highlight: #FDECEE; --highlight-border: #ff8c97; --surface-soft: #FAFAFA;
+      --surface-strong: #F5F5F5; --text: #17181A; --text-muted: #6D6E73; --border: #DADCE0; --input-bg: #FFFFFF;
+      --table-header-bg: var(--primary); --table-header-text: #FFFFFF; --table-stripe: #fafafb;
+    }
+    [data-theme="midnatt"] {
+      --bg: #1A1D23; --bg-card: #242830; --primary: #7EB8DA; --primary-light: #9acae6; --accent: #F0C754;
+      --accent-light: #f5d87a; --highlight: #2A3A2E; --highlight-border: #5a9a6a; --surface-soft: #20252B;
+      --surface-strong: #26312A; --text: #E0E0E0; --text-muted: #8B92A0; --border: #363B44; --input-bg: #2C3038;
+      --table-header-bg: var(--primary); --table-header-text: #1A1D23; --table-stripe: #20242a;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3); --shadow-lg: 0 4px 12px rgba(0,0,0,0.4); --on-primary: #1A1D23;
+    }
+    [data-theme="grafit"] {
+      --bg: #1E1E22; --bg-card: #28282E; --primary: #A0D4A0; --primary-light: #b8e0b8; --accent: #E8A445;
+      --accent-light: #f0be6e; --highlight: #2E3828; --highlight-border: #6aaa6a; --surface-soft: #25252A;
+      --surface-strong: #293328; --text: #D8D8D8; --text-muted: #888890; --border: #3A3A42; --input-bg: #303036;
+      --table-header-bg: var(--primary); --table-header-text: #1E1E22; --table-stripe: #24242a;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3); --shadow-lg: 0 4px 12px rgba(0,0,0,0.4); --on-primary: #1E1E22;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height: 1.5;
+    }
+    .container { max-width: 1440px; margin: 0 auto; padding: 22px 18px 60px; }
+    .theme-bar {
+      display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:18px;
+    }
+    .theme-divider { width:1px; height:28px; background:var(--border); margin:0 8px; }
+    .theme-btn {
+      display:inline-flex; align-items:center; gap:10px; padding:10px 14px; border-radius:999px; border:1px solid var(--border);
+      background: color-mix(in srgb, var(--bg-card) 92%, var(--bg) 8%); color:var(--text); font-size:13px; cursor:pointer;
+      user-select:none; transition: background .15s ease, transform .06s ease, border-color .15s ease;
+    }
+    .theme-btn:hover { background: color-mix(in srgb, var(--bg-card) 82%, var(--accent) 18%); }
+    .theme-btn:active { transform: translateY(1px); }
+    .theme-btn.active { background:var(--primary); color:var(--on-primary); border-color:var(--primary); }
+    .theme-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; border:1px solid rgba(0,0,0,.1); }
+
+    .header {
+      display:grid; grid-template-columns: 1fr auto; gap:18px; align-items:end; margin-bottom:18px;
+    }
+    .hero h1 { margin:0 0 6px; font-size:32px; line-height:1.15; color:var(--primary); }
+    .hero p { margin:0; color:var(--text-muted); max-width:840px; }
+    .hero-meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+
+    .badge {
+      display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;
+      background: var(--surface-strong); color: var(--primary); border:1px solid var(--highlight-border);
+    }
+    .badge.alt { background: color-mix(in srgb, var(--accent) 14%, transparent); color:var(--text); }
+
+    .report-toggle { display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+    .btn {
+      background:var(--primary); color:var(--on-primary); border:none; border-radius:12px; padding:12px 18px;
+      font-size:14px; font-weight:700; cursor:pointer; box-shadow:var(--shadow);
+    }
+    .btn.secondary { background:transparent; color:var(--text-muted); border:1px solid var(--border); box-shadow:none; }
+    .btn.small { padding:8px 12px; font-size:12px; }
+    .btn.export { background:var(--primary); }
+
+    .card {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow);
+      padding:18px 18px 16px; margin:16px 0; overflow:hidden;
+    }
+    .card h2 { margin:0 0 4px; font-size:18px; color:var(--primary); }
+    .card h3 { margin:0 0 10px; font-size:16px; color:var(--primary); }
+    .section-line { width:118px; height:4px; border-radius:999px; background:var(--accent); margin:0 0 18px; }
+    .section-note { color:var(--text-muted); font-size:12px; margin: -6px 0 14px; }
+
+    .grid-2 { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:16px; }
+    .grid-3 { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:14px; }
+    .grid-4 { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
+
+    .fieldset-box {
+      border:1px solid var(--border); border-radius:var(--radius-lg); padding:14px 16px 6px; margin-bottom:14px;
+    }
+    .fieldset-box legend { font-size:13px; font-weight:700; color:var(--primary); padding:0 6px; }
+
+    .form-group { display:flex; flex-direction:column; gap:5px; min-width:0; }
+    .form-group label { font-size:13px; font-weight:700; color:var(--text); }
+    .help-text { font-size:12px; color:var(--text-muted); }
+    input, select, textarea {
+      width:100%; border:1px solid var(--border); background:var(--input-bg, var(--bg-card)); color:var(--text);
+      border-radius:12px; padding:11px 14px; font-size:14px; font-family:inherit;
+    }
+    input:focus, select:focus, textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+    .input-unit { position:relative; }
+    .input-unit input, .input-unit select { padding-right:58px; }
+    .input-unit.wide input, .input-unit.wide select { padding-right:88px; }
+    .suffix {
+      position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:12px; font-weight:700; pointer-events:none;
+    }
+    .inline-check { display:flex; align-items:center; gap:8px; font-size:14px; color:var(--text); margin-top:8px; }
+    .inline-check input { width:auto; }
+
+    .kpi-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; }
+    .kpi {
+      background:var(--surface-soft); border:1px solid var(--highlight-border); border-radius:16px; padding:16px; min-height:120px;
+    }
+    .kpi .label { font-size:13px; color:var(--text-muted); margin-bottom:10px; }
+    .kpi .value { font-size:22px; font-weight:800; color:var(--primary); line-height:1.1; }
+    .kpi .sub { color:var(--text-muted); font-size:12px; margin-top:7px; }
+
+    .table-wrap { overflow:auto; border:1px solid var(--border); border-radius:14px; }
+    .table { width:100%; border-collapse:collapse; min-width:860px; }
+    .table thead th {
+      background:var(--table-header-bg); color:var(--table-header-text); text-align:left; padding:11px 12px; font-size:12px;
+      position:sticky; top:0; z-index:2; white-space:nowrap;
+    }
+    .table tbody td { padding:9px 12px; border-top:1px solid var(--border); vertical-align:middle; font-size:13px; }
+    .table tbody tr:nth-child(even) { background:var(--table-stripe); }
+    .num { text-align:right; white-space:nowrap; }
+
+    .chart-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; }
+    .chart-card { background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:18px; box-shadow:var(--shadow); }
+    .chart-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; }
+    .chart-head h3 { margin:0; }
+    .chart-wrap { height:320px; }
+    .chart-wrap.tall { height:360px; }
+    .chart-wrap canvas { width:100% !important; height:100% !important; display:block; }
+
+    .alt-card { background:var(--surface-soft); }
+    .summary-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:16px; }
+    .mini-list { display:grid; gap:10px; }
+    .mini-item { padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--bg-card); }
+    .mini-item strong { display:block; color:var(--primary); margin-bottom:4px; }
+    .result-wrap { display:block; }
+    .footer { text-align:center; color:var(--text-muted); font-size:12px; margin-top:32px; padding:18px 0; }
+
+    .report-mode .controls-only, .report-mode .theme-bar { display:none !important; }
+    .report-mode .report-toggle { display:flex !important; }
+    .report-mode .result-wrap { display:block !important; }
+
+    @media (max-width: 1160px) {
+      .grid-2, .grid-3, .grid-4, .kpi-grid, .chart-grid, .summary-grid, .header { grid-template-columns:1fr; }
+      .container { padding:0 12px 56px; }
+      .hero h1 { font-size:28px; }
+      .report-toggle { justify-content:flex-start; }
+    }
+
+    @media print {
+      body { background:#fff; }
+      .theme-bar, .report-toggle, .controls-only, .footer, .chart-head button { display:none !important; }
+      .result-wrap { display:block !important; }
+      .card, .chart-card { box-shadow:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="theme-bar controls-only">
+      <button class="theme-btn active" onclick="setTheme('nordisk')" data-theme-btn="nordisk"><span class="theme-dot" style="background:#1B3A4B"></span>Nordisk Energi</button>
+      <button class="theme-btn" onclick="setTheme('solcell')" data-theme-btn="solcell"><span class="theme-dot" style="background:#2E7D32"></span>Solcell</button>
+      <button class="theme-btn" onclick="setTheme('blueprint')" data-theme-btn="blueprint"><span class="theme-dot" style="background:#0097A7"></span>Blueprint</button>
+      <button class="theme-btn" onclick="setTheme('koppar')" data-theme-btn="koppar"><span class="theme-dot" style="background:#C17F4E"></span>Koppar</button>
+      <button class="theme-btn" onclick="setTheme('lovverk')" data-theme-btn="lovverk"><span class="theme-dot" style="background:#A8C256"></span>Lövverk</button>
+      <button class="theme-btn" onclick="setTheme('kooperativ')" data-theme-btn="kooperativ"><span class="theme-dot" style="background:#E90016"></span>Kooperativ</button>
+      <div class="theme-divider"></div>
+      <button class="theme-btn" onclick="setTheme('midnatt')" data-theme-btn="midnatt"><span class="theme-dot" style="background:#7EB8DA"></span>Midnatt</button>
+      <button class="theme-btn" onclick="setTheme('grafit')" data-theme-btn="grafit"><span class="theme-dot" style="background:#A0D4A0"></span>Grafit</button>
+    </div>
+
+    <header class="header">
+      <div class="hero">
+        <h1>Värmepumpskalkyl</h1>
+        <p>Ekonomisk investeringsanalys för konvertering till värmepump i flerbostadshus. Verktyget jämför nuvarande uppvärmningssystem med upp till tre värmepumpsalternativ och redovisar livscykelkostnad, NPV, payoff, IRR, klimatpåverkan och känslighet.</p>
+        <div class="hero-meta">
+          <span class="badge">1 HTML-fil</span>
+          <span class="badge alt">1–3 alternativ</span>
+          <span class="badge alt">Rapportläge + PNG/PDF</span>
+          <span class="badge alt">Exportklar JSON</span>
+        </div>
+      </div>
+      <div class="report-toggle">
+        <button class="btn secondary small" id="reportModeBtn">Rapportläge</button>
+        <button class="btn secondary small controls-only" id="exportPdfBtn">⬇ Exportera PDF</button>
+      </div>
+    </header>
+
+    <section class="card controls-only" id="input-fastighet">
+      <h2>Fastigheten</h2>
+      <div class="section-line"></div>
+      <div class="grid-2">
+        <fieldset class="fieldset-box">
+          <legend>Fastighetsdata</legend>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="fastighetNamn">Fastighetsnamn</label>
+              <input id="fastighetNamn" type="text" value="Brf Exempelgården">
+            </div>
+            <div class="form-group">
+              <label for="fastighetId">Fastighets-ID</label>
+              <input id="fastighetId" type="text" value="brf-exempelgarden">
+            </div>
+            <div class="form-group">
+              <label for="kommun">Kommun</label>
+              <input id="kommun" type="text" value="Göteborg">
+            </div>
+            <div class="form-group">
+              <label for="atemp">Atemp</label>
+              <div class="input-unit wide"><input id="atemp" class="integer-field" type="text" value="4 200"><span class="suffix">m²</span></div>
+            </div>
+            <div class="form-group">
+              <label for="klimatzon">Klimatzon</label>
+              <select id="klimatzon">
+                <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="gradtimmar">Gradtimmar</label>
+              <div class="input-unit wide"><input id="gradtimmar" class="integer-field" type="text" value="90 000"><span class="suffix">Kh</span></div>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset class="fieldset-box">
+          <legend>Energibehov</legend>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="energiVarme">Årligt värmebehov</label>
+              <div class="input-unit wide"><input id="energiVarme" class="integer-field" type="text" value="350 000"><span class="suffix">kWh/år</span></div>
+            </div>
+            <div class="form-group">
+              <label for="energiVv">Årligt varmvattenbehov</label>
+              <div class="input-unit wide"><input id="energiVv" class="integer-field" type="text" value="80 000"><span class="suffix">kWh/år</span></div>
+            </div>
+            <div class="form-group">
+              <label for="energiTotal">Totalt värme + varmvatten</label>
+              <div class="input-unit wide"><input id="energiTotal" class="integer-field" type="text" value="430 000"><span class="suffix">kWh/år</span></div>
+            </div>
+          </div>
+          <div class="help-text">Kan matas in manuellt eller via framtida integration från Energistatistik. Totalt energibehov används i kalkylen.</div>
+        </fieldset>
+      </div>
+
+      <fieldset class="fieldset-box">
+        <legend>Nuvarande system</legend>
+        <div class="grid-4">
+          <div class="form-group">
+            <label for="nuvarandeTyp">Systemtyp</label>
+            <select id="nuvarandeTyp">
+              <option value="fjarrvarme" selected>Fjärrvärme</option>
+              <option value="direktel">Direktverkande el</option>
+              <option value="olja">Olja</option>
+              <option value="pellets">Pellets</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="nuvarandeArskostnad">Årskostnad idag</label>
+            <div class="input-unit wide"><input id="nuvarandeArskostnad" class="integer-field" type="text" value="430 000"><span class="suffix">kr/år</span></div>
+          </div>
+          <div class="form-group">
+            <label for="nuvarandePris">Energi-/bränslepris</label>
+            <div class="input-unit wide"><input id="nuvarandePris" class="decimal-field" type="text" value="0,78"><span class="suffix" id="nuvarandePrisUnit">kr/kWh</span></div>
+          </div>
+          <div class="form-group">
+            <label for="nuvarandeAbonnemang">Fast kostnad</label>
+            <div class="input-unit wide"><input id="nuvarandeAbonnemang" class="integer-field" type="text" value="95 000"><span class="suffix">kr/år</span></div>
+          </div>
+          <div class="form-group">
+            <label for="effektMax">Dimensionerande effekt</label>
+            <div class="input-unit"><input id="effektMax" class="integer-field" type="text" value="220"><span class="suffix">kW</span></div>
+          </div>
+          <div class="form-group">
+            <label for="prisprofil">Prisprofil</label>
+            <select id="prisprofil">
+              <option value="egna" selected>Egna priser</option>
+              <option value="goteborg">Göteborg Energi</option>
+              <option value="sverige">Sverigemedel</option>
+              <option value="generisk-el">Generisk elprofil</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <section class="card controls-only" id="input-alternativ">
+      <h2>Värmepumpsalternativ</h2>
+      <div class="section-line"></div>
+      <div class="section-note">Fyll i ett till tre alternativ. Tomma alternativ ignoreras. NPV och LCC räknas över respektive livslängd, medan jämförelsediagram använder gemensam horisont baserad på längst livslängd.</div>
+      <div class="grid-3">
+        <fieldset class="fieldset-box">
+          <legend>Alternativ 1</legend>
+          <div class="grid-2" id="alt1Scope"></div>
+        </fieldset>
+        <fieldset class="fieldset-box">
+          <legend>Alternativ 2</legend>
+          <div class="grid-2" id="alt2Scope"></div>
+        </fieldset>
+        <fieldset class="fieldset-box">
+          <legend>Alternativ 3</legend>
+          <div class="grid-2" id="alt3Scope"></div>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="card controls-only" id="input-param">
+      <h2>Förutsättningar</h2>
+      <div class="section-line"></div>
+      <div class="grid-2">
+        <fieldset class="fieldset-box">
+          <legend>Ekonomi</legend>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="kalkylranta">Kalkylränta</label>
+              <div class="input-unit"><input id="kalkylranta" class="decimal-field" type="text" value="5,0"><span class="suffix">%</span></div>
+            </div>
+            <div class="form-group">
+              <label for="elpris">Elpris</label>
+              <div class="input-unit"><input id="elpris" class="decimal-field" type="text" value="1,65"><span class="suffix">kr/kWh</span></div>
+            </div>
+            <div class="form-group">
+              <label for="elprisUtveckling">Elprisutveckling</label>
+              <div class="input-unit"><input id="elprisUtveckling" class="decimal-field" type="text" value="2,5"><span class="suffix">%/år</span></div>
+            </div>
+            <div class="form-group">
+              <label for="fvPrisUtveckling">Fjärrvärmepris-utveckling</label>
+              <div class="input-unit"><input id="fvPrisUtveckling" class="decimal-field" type="text" value="2,5"><span class="suffix">%/år</span></div>
+            </div>
+            <div class="form-group">
+              <label for="oljaPrisUtveckling">Olje-/bränsleutveckling</label>
+              <div class="input-unit"><input id="oljaPrisUtveckling" class="decimal-field" type="text" value="2,5"><span class="suffix">%/år</span></div>
+            </div>
+            <div class="form-group">
+              <label for="inflation">Inflation (info)</label>
+              <div class="input-unit"><input id="inflation" class="decimal-field" type="text" value="2,0"><span class="suffix">%/år</span></div>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset class="fieldset-box">
+          <legend>Klimat och visning</legend>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="co2El">CO₂-faktor el</label>
+              <div class="input-unit"><input id="co2El" class="decimal-field-5" type="text" value="0,46479"><span class="suffix">kg/kWh</span></div>
+            </div>
+            <div class="form-group">
+              <label for="co2Fv">CO₂-faktor fjärrvärme</label>
+              <div class="input-unit"><input id="co2Fv" class="decimal-field" type="text" value="0,07000"><span class="suffix">kg/kWh</span></div>
+            </div>
+            <div class="form-group">
+              <label for="co2Olja">CO₂-faktor olja</label>
+              <div class="input-unit"><input id="co2Olja" class="decimal-field" type="text" value="0,28000"><span class="suffix">kg/kWh</span></div>
+            </div>
+            <div class="form-group">
+              <label for="co2Pellets">CO₂-faktor pellets</label>
+              <div class="input-unit"><input id="co2Pellets" class="decimal-field" type="text" value="0,02000"><span class="suffix">kg/kWh</span></div>
+            </div>
+            <div class="form-group">
+              <label for="currencyMode">Valutaläge</label>
+              <select id="currencyMode"><option value="kr" selected>kr</option><option value="tkr">tkr</option><option value="mkr">Mkr</option></select>
+            </div>
+            <div class="form-group">
+              <label for="sensitivitySpread">Känslighet ±</label>
+              <div class="input-unit"><input id="sensitivitySpread" class="decimal-field" type="text" value="1,0"><span class="suffix">pp</span></div>
+            </div>
+          </div>
+          <div class="help-text">CO₂-faktor för fjärrvärme anges manuellt. Hämta värdet från lokalt energibolags miljörapport. Prisprofilen prepopulerar prisfälten men låser dem inte.</div>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="card result-wrap" id="result-overview">
+      <h2>Översikt</h2>
+      <div class="section-line"></div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+    </section>
+
+    <section class="card result-wrap">
+      <h2>Sammanställning</h2>
+      <div class="section-line"></div>
+      <div class="summary-grid">
+        <div>
+          <div class="table-wrap" id="summaryWrap">
+            <table class="table" id="summaryTable">
+              <thead>
+                <tr><th>Nyckeltal</th><th>Nuvarande</th><th>Alternativ 1</th><th>Alternativ 2</th><th>Alternativ 3</th></tr>
+              </thead>
+              <tbody id="summaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="alt-card card" style="margin:0;">
+          <h3>Rapporttext</h3>
+          <div class="mini-list" id="reportMeta"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card result-wrap">
+      <h2>Årstabell</h2>
+      <div class="section-line"></div>
+      <div class="table-wrap" id="cashflowWrap">
+        <table class="table" id="cashflowTable">
+          <thead id="cashflowHead"></thead>
+          <tbody id="cashflowBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="result-wrap">
+      <div class="chart-grid">
+        <div class="chart-card" id="annualCostSection">
+          <div class="chart-head"><h3>Årlig kostnad</h3><button class="btn small export controls-only" onclick="exportNode('annualCostSection', 'varmepumpskalkyl_arlig_kostnad.png')">⬇ PNG</button></div>
+          <div class="chart-wrap"><canvas id="annualCostChart"></canvas></div>
+        </div>
+        <div class="chart-card" id="cumulativeSection">
+          <div class="chart-head"><h3>Kumulativ besparing</h3><button class="btn small export controls-only" onclick="exportNode('cumulativeSection', 'varmepumpskalkyl_kumulativ_besparing.png')">⬇ PNG</button></div>
+          <div class="chart-wrap"><canvas id="cumulativeChart"></canvas></div>
+        </div>
+        <div class="chart-card" id="lccSection">
+          <div class="chart-head"><h3>LCC-jämförelse</h3><button class="btn small export controls-only" onclick="exportNode('lccSection', 'varmepumpskalkyl_lcc.png')">⬇ PNG</button></div>
+          <div class="chart-wrap"><canvas id="lccChart"></canvas></div>
+        </div>
+        <div class="chart-card" id="co2Section">
+          <div class="chart-head"><h3>CO₂-reduktion</h3><button class="btn small export controls-only" onclick="exportNode('co2Section', 'varmepumpskalkyl_co2.png')">⬇ PNG</button></div>
+          <div class="chart-wrap"><canvas id="co2Chart"></canvas></div>
+        </div>
+        <div class="chart-card" id="sensitivitySection" style="grid-column: 1 / -1;">
+          <div class="chart-head"><h3>Känslighetsanalys — NPV vid låg / bas / hög elprisutveckling</h3><button class="btn small export controls-only" onclick="exportNode('sensitivitySection', 'varmepumpskalkyl_kanslighet.png')">⬇ PNG</button></div>
+          <div class="chart-wrap tall"><canvas id="sensitivityChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">Värmepumpskalkyl v1.0 — statisk HTML-modul — 2026</div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let charts = {};
+
+    const priceProfiles = {
+      egna: null,
+      goteborg: { nuvarandePris: 0.84, nuvarandeAbonnemang: 110000, elpris: 1.72, fvPrisUtveckling: 2.6, elprisUtveckling: 2.5 },
+      sverige: { nuvarandePris: 0.76, nuvarandeAbonnemang: 98000, elpris: 1.58, fvPrisUtveckling: 2.5, elprisUtveckling: 2.5 },
+      'generisk-el': { nuvarandePris: 1.52, nuvarandeAbonnemang: 25000, elpris: 1.52, fvPrisUtveckling: 2.5, elprisUtveckling: 2.5, forceType: 'direktel' }
+    };
+
+    const altTemplates = [
+      { prefix:'alt1', enabled:true, namn:'Bergvärme 220 kW', typ:'bergvarme', invest:2400000, cop:3.7, tack:92, spets:'fjarrvarme', underhall:15000, livslangd:25, reinvestAr:14, reinvestKostnad:180000, behaller:true, fast:35000 },
+      { prefix:'alt2', enabled:true, namn:'Frånluft 120 kW', typ:'franluft', invest:1450000, cop:2.9, tack:68, spets:'el', underhall:18000, livslangd:15, reinvestAr:12, reinvestKostnad:140000, behaller:false, fast:0 },
+      { prefix:'alt3', enabled:false, namn:'Luft-vatten 180 kW', typ:'luft_vatten', invest:1750000, cop:3.1, tack:78, spets:'el', underhall:22000, livslangd:18, reinvestAr:10, reinvestKostnad:165000, behaller:false, fast:0 }
+    ];
+
+    function buildAltFields() {
+      altTemplates.forEach((tpl, idx) => {
+        const scope = $(tpl.prefix + 'Scope');
+        scope.innerHTML = `
+          <div class="form-group" style="grid-column:1 / -1;">
+            <label for="${tpl.prefix}Enabled">Aktivera alternativ</label>
+            <div class="inline-check"><input id="${tpl.prefix}Enabled" type="checkbox" ${tpl.enabled ? 'checked' : ''}> Visa i jämförelsen</div>
+          </div>
+          <div class="form-group" style="grid-column:1 / -1;"><label for="${tpl.prefix}Namn">Namn</label><input id="${tpl.prefix}Namn" type="text" value="${tpl.namn}"></div>
+          <div class="form-group"><label for="${tpl.prefix}Typ">Typ</label><select id="${tpl.prefix}Typ"><option value="bergvarme" ${tpl.typ==='bergvarme'?'selected':''}>Bergvärme</option><option value="franluft" ${tpl.typ==='franluft'?'selected':''}>Frånluftsvärmepump</option><option value="luft_vatten" ${tpl.typ==='luft_vatten'?'selected':''}>Luft-vattenvärmepump</option></select></div>
+          <div class="form-group"><label for="${tpl.prefix}Invest">Investering</label><div class="input-unit wide"><input id="${tpl.prefix}Invest" class="integer-field" type="text" value="${fmt0(tpl.invest)}"><span class="suffix">kr</span></div></div>
+          <div class="form-group"><label for="${tpl.prefix}Cop">Årsmedel-COP</label><div class="input-unit"><input id="${tpl.prefix}Cop" class="decimal-field" type="text" value="${fmt1(tpl.cop)}"><span class="suffix">SCOP</span></div></div>
+          <div class="form-group"><label for="${tpl.prefix}Tack">Täckningsgrad</label><div class="input-unit"><input id="${tpl.prefix}Tack" class="decimal-field" type="text" value="${fmt1(tpl.tack)}"><span class="suffix">%</span></div></div>
+          <div class="form-group"><label for="${tpl.prefix}Spets">Spetsvärme</label><select id="${tpl.prefix}Spets"><option value="el" ${tpl.spets==='el'?'selected':''}>El</option><option value="fjarrvarme" ${tpl.spets==='fjarrvarme'?'selected':''}>Fjärrvärme</option></select></div>
+          <div class="form-group"><label for="${tpl.prefix}Underhall">Underhåll</label><div class="input-unit wide"><input id="${tpl.prefix}Underhall" class="integer-field" type="text" value="${fmt0(tpl.underhall)}"><span class="suffix">kr/år</span></div></div>
+          <div class="form-group"><label for="${tpl.prefix}Liv">Livslängd</label><div class="input-unit"><input id="${tpl.prefix}Liv" class="integer-field" type="text" value="${fmt0(tpl.livslangd)}"><span class="suffix">år</span></div></div>
+          <div class="form-group"><label for="${tpl.prefix}ReinvestAr">Reinvestering år</label><div class="input-unit"><input id="${tpl.prefix}ReinvestAr" class="integer-field" type="text" value="${fmt0(tpl.reinvestAr)}"><span class="suffix">år</span></div></div>
+          <div class="form-group"><label for="${tpl.prefix}ReinvestKostnad">Reinvestering kostnad</label><div class="input-unit wide"><input id="${tpl.prefix}ReinvestKostnad" class="integer-field" type="text" value="${fmt0(tpl.reinvestKostnad)}"><span class="suffix">kr</span></div></div>
+          <div class="form-group"><label for="${tpl.prefix}BehallerFjv">Behåll fjärrvärmeanslutning</label><div class="inline-check"><input id="${tpl.prefix}BehallerFjv" type="checkbox" ${tpl.behaller ? 'checked' : ''}> Reducerad fast avgift</div></div>
+          <div class="form-group"><label for="${tpl.prefix}Fast">Kvarvarande fast avgift</label><div class="input-unit wide"><input id="${tpl.prefix}Fast" class="integer-field" type="text" value="${fmt0(tpl.fast)}"><span class="suffix">kr/år</span></div></div>
+          <div class="form-group" style="grid-column:1 / -1;"><div class="help-text" id="${tpl.prefix}Derived"></div></div>
+        `;
+      });
+    }
+
+    function parseNum(v) {
+      if (typeof v === 'number') return v;
+      let s = String(v || '').trim();
+      if (!s) return NaN;
+      s = s.replace(/\s|\u00a0/g, '').replace(',', '.').replace(/[^0-9.\-]/g, '');
+      const n = Number(s);
+      return Number.isFinite(n) ? n : NaN;
+    }
+    function fmt0(n) { return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Number(n) || 0); }
+    function fmt1(n) { return new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(Number(n) || 0); }
+    function fmt2(n) { return new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n) || 0); }
+    function fmt5(n) { return new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 5, maximumFractionDigits: 5 }).format(Number(n) || 0); }
+    function fmtCur(n) {
+      const mode = $('currencyMode').value, v = Number(n) || 0;
+      if (mode === 'tkr') return fmt1(v / 1e3) + ' tkr';
+      if (mode === 'mkr') return fmt2(v / 1e6) + ' Mkr';
+      return fmt0(v) + ' kr';
+    }
+    function fmtKwh(n) { return fmt0(n) + ' kWh/år'; }
+    function fmtPct(n) { return fmt1(n) + ' %'; }
+    function fmtKg(n) { return fmt0(n) + ' kg CO₂e/år'; }
+    function fmtIrr(n) { return Number.isFinite(n) ? fmt1(n) + ' %' : '—'; }
+
+    function formatIntegerInput(input) {
+      const v = parseNum(input.value);
+      if (Number.isFinite(v)) input.value = fmt0(v);
+    }
+    function formatDecimalInput(input, decimals = 1) {
+      const v = parseNum(input.value);
+      if (!Number.isFinite(v)) return;
+      input.value = decimals === 5 ? fmt5(v) : (decimals === 2 ? fmt2(v) : fmt1(v));
+    }
+    function bindNumericFormatting(scope = document) {
+      scope.querySelectorAll('.decimal-field').forEach(input => {
+        input.addEventListener('blur', e => formatDecimalInput(e.target, 1));
+        input.addEventListener('focus', e => e.target.select());
+      });
+      scope.querySelectorAll('.decimal-field-5').forEach(input => {
+        input.addEventListener('blur', e => formatDecimalInput(e.target, 5));
+        input.addEventListener('focus', e => e.target.select());
+      });
+      scope.querySelectorAll('.integer-field').forEach(input => {
+        input.addEventListener('blur', e => formatIntegerInput(e.target));
+        input.addEventListener('focus', e => e.target.select());
+      });
+    }
+
+    function setTheme(name) {
+      const map = { nordisk:'', solcell:'solcell', blueprint:'blueprint', koppar:'koppar', lovverk:'lovverk', kooperativ:'kooperativ', midnatt:'midnatt', grafit:'grafit' };
+      document.documentElement.setAttribute('data-theme', map[name] || '');
+      document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.themeBtn === name));
+      recalcLive();
+    }
+
+    function themeColors() {
+      const s = getComputedStyle(document.documentElement);
+      return {
+        primary: s.getPropertyValue('--primary').trim(),
+        accent: s.getPropertyValue('--accent').trim(),
+        border: s.getPropertyValue('--border').trim(),
+        text: s.getPropertyValue('--text').trim(),
+        muted: s.getPropertyValue('--text-muted').trim(),
+        highlight: s.getPropertyValue('--highlight-border').trim(),
+        stripe: s.getPropertyValue('--table-stripe').trim(),
+      };
+    }
+
+    function chartOptionsBase(colors, formatter) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode:'index', intersect:false },
+        plugins: { legend: { labels: { color: colors.text } } },
+        scales: {
+          x: { ticks: { color: colors.text }, grid: { display:false } },
+          y: { ticks: { color: colors.muted, callback: formatter || (v => fmt0(v)) }, grid: { color: colors.border } }
+        }
+      };
+    }
+
+    function typeLabel(v) {
+      return ({ bergvarme:'Bergvärme', franluft:'Frånluftsvärmepump', luft_vatten:'Luft-vattenvärmepump' })[v] || v;
+    }
+
+    function currentSystemCo2Factor(type, param) {
+      if (type === 'fjarrvarme') return param.co2Fv;
+      if (type === 'direktel') return param.co2El;
+      if (type === 'olja') return param.co2Olja;
+      if (type === 'pellets') return param.co2Pellets;
+      return param.co2Fv;
+    }
+
+    function currentPriceGrowth(type, param) {
+      if (type === 'direktel') return param.elGrowth;
+      if (type === 'olja' || type === 'pellets') return param.oilGrowth;
+      return param.fvGrowth;
+    }
+
+    function deriveAnnualCost(type, energy, price, subscription) {
+      if (Number.isFinite(price) && price > 0 && Number.isFinite(energy) && energy > 0) return subscription + energy * price;
+      return NaN;
+    }
+
+    function npv(rate, cashflows) {
+      const r = rate / 100;
+      return cashflows.reduce((sum, cf, i) => sum + cf / Math.pow(1 + r, i), 0);
+    }
+
+    function irr(cashflows) {
+      let low = -0.99, high = 2.0;
+      const f = r => cashflows.reduce((sum, cf, i) => sum + cf / Math.pow(1 + r, i), 0);
+      let fLow = f(low), fHigh = f(high);
+      let guard = 0;
+      while (fLow * fHigh > 0 && guard < 30) {
+        high *= 1.5; fHigh = f(high); guard++;
+        if (high > 100) return NaN;
+      }
+      if (fLow * fHigh > 0) return NaN;
+      for (let i = 0; i < 120; i++) {
+        const mid = (low + high) / 2;
+        const fMid = f(mid);
+        if (Math.abs(fMid) < 1e-7) return mid * 100;
+        if (fLow * fMid <= 0) { high = mid; fHigh = fMid; } else { low = mid; fLow = fMid; }
+      }
+      return ((low + high) / 2) * 100;
+    }
+
+    function payback(cumulative) {
+      for (let i = 0; i < cumulative.length; i++) {
+        if (cumulative[i] >= 0) return i;
+      }
+      return NaN;
+    }
+
+    function activeAlternatives(data) {
+      return data.alternatives.filter(a => a.enabled && a.invest > 0 && a.life > 0 && a.cop > 0 && a.coverage > 0);
+    }
+
+    function readData() {
+      const param = {
+        rate: parseNum($('kalkylranta').value) || 5,
+        elPrice: parseNum($('elpris').value) || 0,
+        elGrowth: parseNum($('elprisUtveckling').value) || 0,
+        fvGrowth: parseNum($('fvPrisUtveckling').value) || 0,
+        oilGrowth: parseNum($('oljaPrisUtveckling').value) || 0,
+        inflation: parseNum($('inflation').value) || 0,
+        co2El: parseNum($('co2El').value) || 0,
+        co2Fv: parseNum($('co2Fv').value) || 0,
+        co2Olja: parseNum($('co2Olja').value) || 0,
+        co2Pellets: parseNum($('co2Pellets').value) || 0,
+        sensitivitySpread: parseNum($('sensitivitySpread').value) || 1,
+      };
+      const fastighet = {
+        id: $('fastighetId').value.trim(), namn: $('fastighetNamn').value.trim(), kommun: $('kommun').value.trim(),
+        atemp: parseNum($('atemp').value) || 0, klimatzon: parseNum($('klimatzon').value) || 0, gradtimmar: parseNum($('gradtimmar').value) || 0,
+        energibehov_varme: parseNum($('energiVarme').value) || 0, energibehov_varmvatten: parseNum($('energiVv').value) || 0,
+        energibehov_total: parseNum($('energiTotal').value) || 0
+      };
+      if (!fastighet.energibehov_total && (fastighet.energibehov_varme || fastighet.energibehov_varmvatten)) fastighet.energibehov_total = fastighet.energibehov_varme + fastighet.energibehov_varmvatten;
+
+      const nuvarande = {
+        typ: $('nuvarandeTyp').value,
+        arskostnad: parseNum($('nuvarandeArskostnad').value),
+        energipris: parseNum($('nuvarandePris').value) || 0,
+        abonnemang: parseNum($('nuvarandeAbonnemang').value) || 0,
+        effekt_max: parseNum($('effektMax').value) || 0
+      };
+      if (!Number.isFinite(nuvarande.arskostnad) || nuvarande.arskostnad <= 0) {
+        nuvarande.arskostnad = deriveAnnualCost(nuvarande.typ, fastighet.energibehov_total, nuvarande.energipris, nuvarande.abonnemang);
+      }
+      const alternatives = altTemplates.map(tpl => {
+        const prefix = tpl.prefix;
+        const coveragePct = parseNum($(prefix + 'Tack').value) || 0;
+        const cop = parseNum($(prefix + 'Cop').value) || 0;
+        const energy = fastighet.energibehov_total;
+        const driftEl = cop > 0 ? energy * (coveragePct / 100) / cop : 0;
+        const driftSpets = energy * (1 - coveragePct / 100);
+        return {
+          key: prefix,
+          enabled: $(prefix + 'Enabled').checked,
+          namn: $(prefix + 'Namn').value.trim() || `Alternativ ${prefix.slice(-1)}`,
+          typ: $(prefix + 'Typ').value,
+          invest: parseNum($(prefix + 'Invest').value) || 0,
+          cop,
+          coverage: coveragePct,
+          spetsTyp: $(prefix + 'Spets').value,
+          driftEl,
+          driftSpets,
+          underhall: parseNum($(prefix + 'Underhall').value) || 0,
+          life: parseNum($(prefix + 'Liv').value) || 0,
+          reinvestYear: parseNum($(prefix + 'ReinvestAr').value) || 0,
+          reinvestCost: parseNum($(prefix + 'ReinvestKostnad').value) || 0,
+          behallerFjv: $(prefix + 'BehallerFjv').checked,
+          fjarrvarmeFast: parseNum($(prefix + 'Fast').value) || 0
+        };
+      });
+      return { fastighet, nuvarande, param, alternatives };
+    }
+
+    function calculate(data) {
+      const { fastighet, nuvarande, param } = data;
+      const active = activeAlternatives(data);
+      const maxLife = Math.max(1, ...active.map(a => a.life), 25);
+      const currentGrowth = currentPriceGrowth(nuvarande.typ, param);
+      const currentCo2 = currentSystemCo2Factor(nuvarande.typ, param);
+      const baselineAnnual = [];
+      for (let year = 1; year <= maxLife; year++) {
+        baselineAnnual.push((nuvarande.abonnemang || 0) + (fastighet.energibehov_total || 0) * (nuvarande.energipris || 0) * Math.pow(1 + currentGrowth / 100, year - 1));
+      }
+      const baselineLccByLife = life => Array.from({length: life}, (_, i) => baselineAnnual[i]).reduce((a,b) => a+b, 0);
+      const baselineCo2 = fastighet.energibehov_total * currentCo2;
+
+      const results = active.map(alt => {
+        const annualRows = [];
+        const cashflows = [-alt.invest];
+        const cumulative = [-alt.invest];
+        let lcc = alt.invest;
+        for (let year = 1; year <= alt.life; year++) {
+          const elVp = alt.driftEl * param.elPrice * Math.pow(1 + param.elGrowth / 100, year - 1);
+          const spetsPrice = alt.spetsTyp === 'el' ? param.elPrice : nuvarande.energipris;
+          const spetsGrowth = alt.spetsTyp === 'el' ? param.elGrowth : currentGrowth;
+          const spets = alt.driftSpets * spetsPrice * Math.pow(1 + spetsGrowth / 100, year - 1);
+          const fast = alt.behallerFjv ? alt.fjarrvarmeFast : 0;
+          const underhall = alt.underhall;
+          const vpCost = elVp + spets + fast + underhall;
+          let saving = baselineAnnual[year - 1] - vpCost;
+          let cf = saving;
+          let reinvest = 0;
+          if (alt.reinvestYear > 0 && year === alt.reinvestYear && alt.reinvestCost > 0) {
+            cf -= alt.reinvestCost;
+            reinvest = alt.reinvestCost;
+          }
+          annualRows.push({ year, baseline: baselineAnnual[year - 1], vpCost, saving, cf, reinvest });
+          cashflows.push(cf);
+          cumulative.push(cumulative[cumulative.length - 1] + cf);
+          lcc += vpCost + reinvest;
+        }
+        const co2Vp = alt.driftEl * param.co2El + alt.driftSpets * (alt.spetsTyp === 'el' ? param.co2El : param.co2Fv);
+        const co2Reduction = baselineCo2 - co2Vp;
+        const npvValue = npv(param.rate, cashflows);
+        const irrValue = irr(cashflows);
+        const paybackYear = payback(cumulative);
+        const baseLccCurrent = baselineLccByLife(alt.life);
+        const specificInvest = (baseLccCurrent > lcc) && (baselineCo2 > 0) ? alt.invest / Math.max(1, fastighet.energibehov_total - (alt.driftEl + alt.driftSpets)) : alt.invest / Math.max(1, fastighet.energibehov_total - (alt.driftEl + alt.driftSpets));
+
+        const horizonRows = [];
+        for (let year = 1; year <= maxLife; year++) {
+          const base = baselineAnnual[year - 1];
+          const reinvestNote = year === alt.reinvestYear && alt.reinvestCost > 0 ? alt.reinvestCost : 0;
+          if (year <= alt.life) {
+            const row = annualRows[year - 1];
+            horizonRows.push({ year, baseline: base, vpCost: row.vpCost, saving: row.saving, active: true, reinvestNote });
+          } else {
+            horizonRows.push({ year, baseline: base, vpCost: null, saving: null, active: false, reinvestNote: (year === alt.life + 1 && alt.reinvestCost > 0) ? alt.reinvestCost : 0 });
+          }
+        }
+
+        const sensitivityGrowths = [param.elGrowth - param.sensitivitySpread, param.elGrowth, param.elGrowth + param.sensitivitySpread];
+        const sensitivity = sensitivityGrowths.map(growth => {
+          const cfs = [-alt.invest];
+          for (let year = 1; year <= alt.life; year++) {
+            const elVp = alt.driftEl * param.elPrice * Math.pow(1 + growth / 100, year - 1);
+            const spetsPrice = alt.spetsTyp === 'el' ? param.elPrice : nuvarande.energipris;
+            const spetsGrowth = alt.spetsTyp === 'el' ? growth : currentGrowth;
+            const spets = alt.driftSpets * spetsPrice * Math.pow(1 + spetsGrowth / 100, year - 1);
+            const fast = alt.behallerFjv ? alt.fjarrvarmeFast : 0;
+            const saving = baselineAnnual[year - 1] - (elVp + spets + fast + alt.underhall);
+            let cf = saving;
+            if (alt.reinvestYear > 0 && year === alt.reinvestYear) cf -= alt.reinvestCost;
+            cfs.push(cf);
+          }
+          return npv(param.rate, cfs);
+        });
+
+        return {
+          ...alt,
+          annualRows,
+          horizonRows,
+          cashflows,
+          npv: npvValue,
+          irr: irrValue,
+          paybackYear,
+          lcc,
+          lccCurrent: baseLccCurrent,
+          savingYear1: annualRows[0]?.saving || 0,
+          co2Vp,
+          co2Reduction,
+          specificInvest,
+          sensitivity
+        };
+      });
+
+      const bestByNpv = [...results].sort((a,b) => b.npv - a.npv)[0] || null;
+      return { ...data, active, maxLife, baselineAnnual, baselineCo2, results, bestByNpv };
+    }
+
+    function renderDerived(result) {
+      altTemplates.forEach(tpl => {
+        const alt = result.alternatives.find(a => a.key === tpl.prefix);
+        if (!alt) return;
+        $(tpl.prefix + 'Derived').textContent = `Beräknad driftel: ${fmt0(alt.driftEl)} kWh/år · spets: ${fmt0(alt.driftSpets)} kWh/år · typ: ${typeLabel(alt.typ)}`;
+      });
+    }
+
+    function renderKpis(result) {
+      const target = $('kpiGrid');
+      if (!result.bestByNpv) {
+        target.innerHTML = '<div class="kpi"><div class="label">Ingen aktiv kalkyl</div><div class="value">—</div><div class="sub">Aktivera minst ett alternativ.</div></div>';
+        return;
+      }
+      const best = result.bestByNpv;
+      target.innerHTML = [
+        { label:'Bästa NPV-alternativ', value: best.namn, sub: `${typeLabel(best.typ)} · livslängd ${fmt0(best.life)} år` },
+        { label:'Besparing år 1', value: fmtCur(best.savingYear1), sub: `Jämfört med ${result.nuvarande.typ === 'fjarrvarme' ? 'fjärrvärme' : 'nuvarande system'}` },
+        { label:'NPV', value: fmtCur(best.npv), sub: `Diskonterat med ${fmtPct(result.param.rate)}` },
+        { label:'Payoff', value: Number.isFinite(best.paybackYear) ? fmt1(best.paybackYear) + ' år' : 'Ej inom livslängd', sub: `IRR ${fmtIrr(best.irr)}` },
+        { label:'CO₂-reduktion', value: fmtKg(best.co2Reduction), sub: `Nuvarande ${fmtKg(result.baselineCo2)}` },
+        { label:'LCC', value: fmtCur(best.lcc), sub: `Nuvarande över samma livslängd ${fmtCur(best.lccCurrent)}` },
+        { label:'Specifik investering', value: fmtCur(best.specificInvest), sub: 'Per sparad kWh/år' },
+        { label:'Gemensam horisont', value: fmt0(result.maxLife) + ' år', sub: 'Diagram och årstabell' }
+      ].map(item => `<div class="kpi"><div class="label">${item.label}</div><div class="value">${item.value}</div><div class="sub">${item.sub}</div></div>`).join('');
+    }
+
+    function td(value, cls='') { return `<td class="${cls}">${value}</td>`; }
+
+    function renderSummary(result) {
+      const rows = [];
+      const cols = [null, ...altTemplates.map(tpl => result.results.find(r => r.key === tpl.prefix) || null)];
+      const baseline = {
+        name: 'Nuvarande',
+        year1: result.baselineAnnual[0] || 0,
+        lcc: null,
+        npv: null,
+        irr: null,
+        payback: null,
+        co2: result.baselineCo2,
+        invest: 0,
+        life: null,
+        energy: result.fastighet.energibehov_total,
+      };
+      const makeVal = (alt, key) => {
+        if (!alt) return '—';
+        switch (key) {
+          case 'type': return typeLabel(alt.typ);
+          case 'invest': return fmtCur(alt.invest);
+          case 'driftEl': return fmtKwh(alt.driftEl);
+          case 'driftSpets': return fmtKwh(alt.driftSpets);
+          case 'cost1': return fmtCur(alt.annualRows[0]?.vpCost || 0);
+          case 'saving1': return fmtCur(alt.savingYear1);
+          case 'life': return fmt0(alt.life) + ' år';
+          case 'npv': return fmtCur(alt.npv);
+          case 'irr': return fmtIrr(alt.irr);
+          case 'payback': return Number.isFinite(alt.paybackYear) ? fmt1(alt.paybackYear) + ' år' : '—';
+          case 'lcc': return fmtCur(alt.lcc);
+          case 'co2': return fmtKg(alt.co2Reduction);
+          case 'rein': return alt.reinvestYear > 0 ? `${fmt0(alt.reinvestYear)} / ${fmtCur(alt.reinvestCost)}` : '—';
+          default: return '—';
+        }
+      };
+      const baseCell = key => {
+        switch (key) {
+          case 'type': return result.nuvarande.typ === 'fjarrvarme' ? 'Fjärrvärme' : (result.nuvarande.typ === 'direktel' ? 'Direktel' : result.nuvarande.typ === 'olja' ? 'Olja' : 'Pellets');
+          case 'invest': return '—';
+          case 'driftEl': return '—';
+          case 'driftSpets': return '—';
+          case 'cost1': return fmtCur(result.baselineAnnual[0] || 0);
+          case 'saving1': return '—';
+          case 'life': return '—';
+          case 'npv': return '—';
+          case 'irr': return '—';
+          case 'payback': return '—';
+          case 'lcc': return '—';
+          case 'co2': return fmtKg(result.baselineCo2);
+          case 'rein': return '—';
+          default: return '—';
+        }
+      };
+      const defs = [
+        ['Typ', 'type'], ['Investering', 'invest'], ['Beräknad driftel', 'driftEl'], ['Spetsenergi', 'driftSpets'], ['Årlig kostnad år 1', 'cost1'],
+        ['Besparing år 1', 'saving1'], ['Livslängd', 'life'], ['NPV', 'npv'], ['IRR', 'irr'], ['Payoff', 'payback'], ['LCC', 'lcc'], ['CO₂ / reduktion', 'co2'], ['Reinvestering år / kostnad', 'rein']
+      ];
+      defs.forEach(([label, key]) => {
+        rows.push(`<tr>${td(label)}${td(baseCell(key))}${altTemplates.map(tpl => td(makeVal(result.results.find(r => r.key === tpl.prefix), key))).join('')}</tr>`);
+      });
+      $('summaryBody').innerHTML = rows.join('');
+
+      $('reportMeta').innerHTML = [
+        { title:'Fastighet', text:`${result.fastighet.namn || 'Fastighet'} · ${result.fastighet.kommun || '—'} · ${fmt0(result.fastighet.atemp)} m² Atemp` },
+        { title:'Nuvarande system', text:`${baseCell('type')} · pris ${fmt2(result.nuvarande.energipris)} ${$('nuvarandePrisUnit').textContent}` },
+        { title:'Kalkylantaganden', text:`Kalkylränta ${fmtPct(result.param.rate)} · elpris ${fmt2(result.param.elPrice)} kr/kWh · elprisutveckling ${fmtPct(result.param.elGrowth)}` },
+        { title:'Klimat', text:`El ${fmt5(result.param.co2El)} kg/kWh · fjärrvärme ${fmt5(result.param.co2Fv)} kg/kWh` },
+        { title:'Jämförelsehorisont', text:`${fmt0(result.maxLife)} år. Alternativ som slutar tidigare markeras med avslutad livslängd och reinvesteringsnotering.` }
+      ].map(item => `<div class="mini-item"><strong>${item.title}</strong>${item.text}</div>`).join('');
+    }
+
+    function renderCashflowTable(result) {
+      const head = ['År', 'Nuvarande kostnad', ...altTemplates.map(tpl => `${tpl.prefix === 'alt1' ? 'Alt 1' : tpl.prefix === 'alt2' ? 'Alt 2' : 'Alt 3'} kostnad`), ...altTemplates.map(tpl => `${tpl.prefix === 'alt1' ? 'Alt 1' : tpl.prefix === 'alt2' ? 'Alt 2' : 'Alt 3'} besparing`)];
+      $('cashflowHead').innerHTML = `<tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>`;
+      const body = [];
+      for (let year = 1; year <= result.maxLife; year++) {
+        const row = [`<td>${year}</td>`, `<td class="num">${fmtCur(result.baselineAnnual[year - 1] || 0)}</td>`];
+        altTemplates.forEach(tpl => {
+          const alt = result.results.find(r => r.key === tpl.prefix);
+          const hr = alt?.horizonRows?.[year - 1];
+          if (!alt || !hr) {
+            row.push('<td class="num">—</td>');
+            return;
+          }
+          if (!hr.active) {
+            row.push(`<td class="num">Avslutad livslängd${hr.reinvestNote ? ` · reinvest ${fmtCur(hr.reinvestNote)}` : ''}</td>`);
+            return;
+          }
+          row.push(`<td class="num">${fmtCur(hr.vpCost)}${hr.reinvestNote ? ` + ${fmtCur(hr.reinvestNote)} reinv.` : ''}</td>`);
+        });
+        altTemplates.forEach(tpl => {
+          const alt = result.results.find(r => r.key === tpl.prefix);
+          const hr = alt?.horizonRows?.[year - 1];
+          row.push(`<td class="num">${alt && hr && hr.active ? fmtCur(hr.saving) : '—'}</td>`);
+        });
+        body.push(`<tr>${row.join('')}</tr>`);
+      }
+      $('cashflowBody').innerHTML = body.join('');
+    }
+
+    function destroyCharts() {
+      Object.values(charts).forEach(c => { if (c) c.destroy(); });
+      charts = {};
+    }
+
+    function buildCharts(result) {
+      destroyCharts();
+      const colors = themeColors();
+      const labels = Array.from({ length: result.maxLife }, (_, i) => `År ${i + 1}`);
+
+      const annualDatasets = [{ label:'Nuvarande system', data: result.baselineAnnual, borderColor: colors.primary, backgroundColor: colorAlpha(colors.primary, 0.15), tension:0.25, borderWidth:2.5 }];
+      result.results.forEach((alt, idx) => {
+        const color = palette(idx, colors);
+        annualDatasets.push({ label:alt.namn, data: labels.map((_, i) => alt.horizonRows[i]?.active ? alt.horizonRows[i].vpCost : null), borderColor: color, backgroundColor: colorAlpha(color, 0.16), tension:0.25, borderWidth:2 });
+      });
+      charts.annualCostChart = new Chart($('annualCostChart'), { type:'line', data:{ labels, datasets:annualDatasets }, options: chartOptionsBase(colors, v => fmt0(v)) });
+
+      const cumDatasets = result.results.map((alt, idx) => {
+        let run = -alt.invest;
+        const data = labels.map((_, i) => {
+          const row = alt.horizonRows[i];
+          if (!row?.active) return null;
+          let cf = row.saving;
+          if (row.reinvestNote) cf -= row.reinvestNote;
+          run += cf;
+          return run;
+        });
+        const color = palette(idx, colors);
+        return { label:alt.namn, data, fill:true, borderColor:color, backgroundColor:colorAlpha(color, 0.14), tension:0.25, borderWidth:2 };
+      });
+      charts.cumulativeChart = new Chart($('cumulativeChart'), { type:'line', data:{ labels, datasets:cumDatasets }, options: chartOptionsBase(colors, v => fmt0(v)) });
+
+      charts.lccChart = new Chart($('lccChart'), {
+        type:'bar',
+        data:{ labels: result.results.map(r => r.namn), datasets:[
+          { label:'LCC värmepump', data: result.results.map(r => r.lcc), backgroundColor: result.results.map((_,i)=> colorAlpha(palette(i, colors), 0.72)), borderColor: result.results.map((_,i)=> palette(i, colors)), borderWidth:1.5 },
+          { label:'Nuvarande över samma livslängd', data: result.results.map(r => r.lccCurrent), backgroundColor: colorAlpha(colors.accent, 0.65), borderColor: colors.accent, borderWidth:1.5 }
+        ]},
+        options: chartOptionsBase(colors, v => fmt0(v))
+      });
+
+      charts.co2Chart = new Chart($('co2Chart'), {
+        type:'bar',
+        data:{ labels: result.results.map(r => r.namn), datasets:[{ label:'Årlig CO₂-reduktion', data: result.results.map(r => r.co2Reduction), backgroundColor: result.results.map((_,i)=> colorAlpha(palette(i, colors), 0.72)), borderColor: result.results.map((_,i)=> palette(i, colors)), borderWidth:1.5 }]},
+        options: chartOptionsBase(colors, v => fmt0(v))
+      });
+
+      charts.sensitivityChart = new Chart($('sensitivityChart'), {
+        type:'bar',
+        data:{ labels: result.results.map(r => r.namn), datasets:[
+          { label:'Låg', data: result.results.map(r => r.sensitivity[0]), backgroundColor: colorAlpha(colors.highlight, 0.7), borderColor: colors.highlight, borderWidth:1.5 },
+          { label:'Bas', data: result.results.map(r => r.sensitivity[1]), backgroundColor: colorAlpha(colors.primary, 0.7), borderColor: colors.primary, borderWidth:1.5 },
+          { label:'Hög', data: result.results.map(r => r.sensitivity[2]), backgroundColor: colorAlpha(colors.accent, 0.7), borderColor: colors.accent, borderWidth:1.5 }
+        ]},
+        options: chartOptionsBase(colors, v => fmt0(v))
+      });
+    }
+
+    function palette(idx, colors) {
+      const set = [colors.primary, colors.accent, colors.highlight, colors.muted, colors.border];
+      return set[idx % set.length] || colors.primary;
+    }
+    function colorAlpha(color, a) {
+      if (!color) return `rgba(27,58,75,${a})`;
+      if (color.startsWith('#')) {
+        const hex = color.slice(1);
+        const norm = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+        const n = parseInt(norm, 16);
+        const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+        return `rgba(${r}, ${g}, ${b}, ${a})`;
+      }
+      return color;
+    }
+
+    function renderAll(result) {
+      renderDerived(result);
+      renderKpis(result);
+      renderSummary(result);
+      renderCashflowTable(result);
+      buildCharts(result);
+    }
+
+    function recalcLive() {
+      const data = readData();
+      const result = calculate(data);
+      renderAll(result);
+      window.__lastResult = result;
+    }
+
+    function applyPriceProfile() {
+      const profile = priceProfiles[$('prisprofil').value];
+      if (!profile) return recalcLive();
+      if (profile.forceType) $('nuvarandeTyp').value = profile.forceType;
+      if (profile.nuvarandePris != null) $('nuvarandePris').value = fmt2(profile.nuvarandePris);
+      if (profile.nuvarandeAbonnemang != null) $('nuvarandeAbonnemang').value = fmt0(profile.nuvarandeAbonnemang);
+      if (profile.elpris != null) $('elpris').value = fmt2(profile.elpris);
+      if (profile.fvPrisUtveckling != null) $('fvPrisUtveckling').value = fmt1(profile.fvPrisUtveckling);
+      if (profile.elprisUtveckling != null) $('elprisUtveckling').value = fmt1(profile.elprisUtveckling);
+      recalcLive();
+    }
+
+    function updateCurrentUnit() {
+      const type = $('nuvarandeTyp').value;
+      $('nuvarandePrisUnit').textContent = type === 'olja' ? 'kr/kWh' : (type === 'pellets' ? 'kr/kWh' : 'kr/kWh');
+      const energy = parseNum($('energiVarme').value) || 0;
+      const vv = parseNum($('energiVv').value) || 0;
+      $('energiTotal').value = fmt0(energy + vv);
+      recalcLive();
+    }
+
+    async function ensureLib(url, check) {
+      if (check()) return;
+      await new Promise((res, rej) => {
+        const s = document.createElement('script'); s.src = url; s.onload = res; s.onerror = () => rej(new Error('Laddningsfel')); document.head.appendChild(s);
+      });
+    }
+
+    async function exportNode(nodeId, filename) {
+      await ensureLib('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', () => !!window.html2canvas);
+      const el = $(nodeId);
+      const canvas = await window.html2canvas(el, { backgroundColor:'#ffffff', scale:2, useCORS:true, logging:false, windowWidth:1400 });
+      const link = document.createElement('a'); link.download = filename; link.href = canvas.toDataURL('image/png'); link.click();
+    }
+
+    async function exportPdf() {
+      await ensureLib('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', () => !!window.html2canvas);
+      await ensureLib('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js', () => !!window.jspdf);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const mg = 10, cw = 190;
+      const snap = el => window.html2canvas(el, { backgroundColor:'#fff', scale:2, useCORS:true, logging:false, windowWidth:1400 });
+      const addImg = async (canvas, y) => {
+        const ih = (canvas.height / canvas.width) * cw;
+        const h = Math.min(ih, 277 - y + mg);
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', mg, y, cw, h);
+        return y + h + 4;
+      };
+      const parts = [ $('result-overview'), $('summaryWrap'), $('annualCostSection'), $('cumulativeSection'), $('lccSection'), $('co2Section'), $('sensitivitySection') ];
+      let y = 10;
+      for (let i = 0; i < parts.length; i++) {
+        const canvas = await snap(parts[i]);
+        const nextHeight = (canvas.height / canvas.width) * cw;
+        if (y + nextHeight > 287 && i > 0) { pdf.addPage(); y = 10; }
+        y = await addImg(canvas, y);
+      }
+      pdf.save('varmepumpskalkyl_rapport.pdf');
+    }
+
+    function getExportData(index = 0) {
+      const result = window.__lastResult || calculate(readData());
+      const alt = result.results[index] || result.bestByNpv;
+      if (!alt) return null;
+      return {
+        source: 'varmepumpskalkyl',
+        version: '1.0',
+        fastighet: {
+          id: result.fastighet.id,
+          namn: result.fastighet.namn,
+          atemp: result.fastighet.atemp,
+          kommun: result.fastighet.kommun,
+          klimatzon: result.fastighet.klimatzon
+        },
+        name: alt.namn,
+        category: 'Värmesystem',
+        invest: alt.invest,
+        energy: Math.max(0, result.fastighet.energibehov_total - (alt.driftEl + alt.driftSpets)),
+        saving: alt.savingYear1,
+        payback: Number.isFinite(alt.paybackYear) ? alt.paybackYear : null,
+        life: alt.life,
+        irr: Number.isFinite(alt.irr) ? alt.irr : null,
+        npv: alt.npv,
+        maintenance: alt.underhall,
+        reinvestYear: alt.reinvestYear || null,
+        reinvestCost: alt.reinvestCost || null,
+        meta: {
+          type: alt.typ,
+          cop: alt.cop,
+          coverage: alt.coverage,
+          driftEl: alt.driftEl,
+          driftSpets: alt.driftSpets,
+          spetsTyp: alt.spetsTyp,
+          co2Reduction: alt.co2Reduction
+        }
+      };
+    }
+
+    function loadImportData(json) {
+      const data = typeof json === 'string' ? JSON.parse(json) : json;
+      const f = data.fastighet || {};
+      if (f.id != null) $('fastighetId').value = f.id;
+      if (f.namn != null) $('fastighetNamn').value = f.namn;
+      if (f.kommun != null) $('kommun').value = f.kommun;
+      if (f.atemp != null) $('atemp').value = fmt0(f.atemp);
+      if (f.klimatzon != null) $('klimatzon').value = String(f.klimatzon);
+      if (f.gradtimmar != null) $('gradtimmar').value = fmt0(f.gradtimmar);
+      if (f.energibehov_varme != null) $('energiVarme').value = fmt0(f.energibehov_varme);
+      if (f.energibehov_varmvatten != null) $('energiVv').value = fmt0(f.energibehov_varmvatten);
+      if (f.energibehov_total != null) $('energiTotal').value = fmt0(f.energibehov_total);
+      const n = data.nuvarande || {};
+      if (n.typ) $('nuvarandeTyp').value = n.typ;
+      if (n.arskostnad != null) $('nuvarandeArskostnad').value = fmt0(n.arskostnad);
+      if (n.energipris != null) $('nuvarandePris').value = fmt2(n.energipris);
+      if (n.abonnemang != null) $('nuvarandeAbonnemang').value = fmt0(n.abonnemang);
+      if (n.effekt_max != null) $('effektMax').value = fmt0(n.effekt_max);
+      recalcLive();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      buildAltFields();
+      bindNumericFormatting(document);
+      document.body.addEventListener('input', e => { if (e.target.matches('input, select, textarea')) recalcLive(); });
+      $('prisprofil').addEventListener('change', applyPriceProfile);
+      $('nuvarandeTyp').addEventListener('change', updateCurrentUnit);
+      $('energiVarme').addEventListener('input', updateCurrentUnit);
+      $('energiVv').addEventListener('input', updateCurrentUnit);
+      $('reportModeBtn').addEventListener('click', () => document.body.classList.toggle('report-mode'));
+      $('exportPdfBtn').addEventListener('click', exportPdf);
+      updateCurrentUnit();
+      recalcLive();
+    });
+
+    window.getExportData = getExportData;
+    window.loadImportData = loadImportData;
+  </script>
+</body>
+</html>
