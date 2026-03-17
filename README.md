@@ -1,7 +1,7 @@
 # Värmepumpskalkyl för flerbostadshus
 
 🔗 **Starta verktyget här:**  
-[Öppna Värmepumpskalkylen](varmepumpskalkyl_index.html)
+[Öppna Värmepumpskalkylen](https://dimfield-git.github.io/varmepumpskalkyl/)
 https://dimfield-git.github.io/varmepumpskalkyl/
 ---
 
