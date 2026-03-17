@@ -2,7 +2,7 @@
 
 🔗 **Starta verktyget här:**  
 [Öppna Värmepumpskalkylen](varmepumpskalkyl_index.html)
-
+https://dimfield-git.github.io/varmepumpskalkyl/
 ---
 
 ## Om verktyget
